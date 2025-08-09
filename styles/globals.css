@@ -1,0 +1,66 @@
+/* styles/globals.css */
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #555555;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --chip-bg: #f3f4f6;
+  --chip-text: #333;
+  --link: #0a58ca;
+  --warn-bg: #fff8dc;
+  --warn-border: #eed;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --text: #f3f4f6;
+  --muted: #c7c9cf;
+  --card: #16161a;
+  --border: #2a2a2e;
+  --chip-bg: #222327;
+  --chip-text: #e5e7eb;
+  --link: #6aa9ff;
+  --warn-bg: #292514;
+  --warn-border: #4a3;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.container { max-width: 960px; margin: 0 auto; padding: 16px; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.h1 { margin: 0; font-size: 28px; }
+.sub { margin: 4px 0 0 0; color: var(--muted); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; align-items: center; }
+.btn {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--chip-bg); color: var(--chip-text); cursor: pointer; font-size: 14px;
+}
+.btn.active { outline: 2px solid var(--link); }
+.toggle {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); cursor: pointer; font-size: 14px;
+}
+
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; margin-top: 12px;
+}
+.card h3 { margin: 0 0 6px 0; line-height: 1.25; }
+.meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.warn {
+  background: var(--warn-bg); border: 1px solid var(--warn-border);
+  border-radius: 8px; padding: 12px; margin-top: 12px;
+}
+.link { color: var(--link); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--chip-bg); }
