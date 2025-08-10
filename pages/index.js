@@ -1,7 +1,7 @@
 // pages/index.js
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-// Simple keyword-based tagger (same as before)
+// --- Tagging for filters ---
 function tagsForArticle(a) {
   const text = `${a.title || ""} ${a.description || ""}`.toLowerCase();
   const tags = [];
@@ -14,28 +14,37 @@ function tagsForArticle(a) {
   if (tags.length === 0) tags.push("Other");
   return Array.from(new Set(tags));
 }
-
 const ALL_FILTERS = ["Campaign", "Legal/Court", "Media", "Social", "Fundraising", "Policy", "Other"];
 
 export default function Home() {
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState([]); // selected filters
+  const [active, setActive] = useState([]);
   const [theme, setTheme] = useState("light");
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  const [xPosts, setXPosts] = useState([]);
+  const [xLoading, setXLoading] = useState(true);
+
   const refetching = useRef(false);
 
-  // Load theme from localStorage
+  // Theme
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("tt-theme") : null;
     const next = saved === "dark" ? "dark" : "light";
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
   }, []);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("tt-theme", next);
+  };
 
-  // Fetch function (shared by auto + manual refresh)
+  // Fetch news
   const fetchNews = async () => {
-    if (refetching.current) return; // prevent double-fetch
+    if (refetching.current) return;
     refetching.current = true;
     setLoading(true);
     try {
@@ -51,20 +60,30 @@ export default function Home() {
     }
   };
 
-  // Initial + hourly refresh
+  // Fetch X posts
+  const fetchX = async () => {
+    setXLoading(true);
+    try {
+      const res = await fetch("/api/x-posts");
+      const data = await res.json();
+      setXPosts(Array.isArray(data.posts) ? data.posts : []);
+    } catch {
+      setXPosts([]);
+    } finally {
+      setXLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchNews();
+    fetchX();
     const id = setInterval(fetchNews, 60 * 60 * 1000);
-    return () => clearInterval(id);
+    const id2 = setInterval(fetchX, 60 * 60 * 1000);
+    return () => {
+      clearInterval(id);
+      clearInterval(id2);
+    };
   }, []);
-
-  // Theme toggle
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("tt-theme", next);
-  };
 
   // Tag + filter
   const tagged = useMemo(() => updates.map(a => ({ ...a, tags: tagsForArticle(a) })), [updates]);
@@ -91,17 +110,13 @@ export default function Home() {
           <button className="toggle" onClick={toggleTheme}>
             {theme === "dark" ? "🌞 Light mode" : "🌙 Dark mode"}
           </button>
-          <button
-            className="toggle"
-            onClick={fetchNews}
-            disabled={loading}
-            title="Fetch latest headlines now"
-          >
+          <button className="toggle" onClick={fetchNews} disabled={loading}>
             {loading ? "Refreshing…" : "🔄 Refresh now"}
           </button>
         </div>
       </div>
 
+      {/* Filters */}
       <div className="toolbar">
         <span style={{ fontSize: 14, color: "var(--muted)" }}>Filters:</span>
         {ALL_FILTERS.map(f => (
@@ -120,6 +135,7 @@ export default function Home() {
         )}
       </div>
 
+      {/* News list */}
       {loading && updates.length === 0 ? (
         <p>Loading…</p>
       ) : filtered.length === 0 ? (
@@ -146,8 +162,29 @@ export default function Home() {
         </section>
       )}
 
+      {/* X posts section */}
+      <section style={{ marginTop: 28 }}>
+        <h2 className="h1" style={{ fontSize: 20, marginBottom: 8 }}>Latest posts on X</h2>
+        {xLoading && xPosts.length === 0 ? (
+          <p>Loading X posts…</p>
+        ) : xPosts.length === 0 ? (
+          <div className="warn">
+            <strong>No recent posts found.</strong> If you haven’t set your token, add <code>TWITTER_BEARER</code> in <code>.env.local</code>.
+          </div>
+        ) : (
+          xPosts.map(p => (
+            <article key={p.id} className="card">
+              <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{p.text}</p>
+              <div className="meta">
+                {new Date(p.created_at).toLocaleString()} · <a className="link" href={p.url} target="_blank" rel="noreferrer">Open on X →</a>
+              </div>
+            </article>
+          ))
+        )}
+      </section>
+
       <footer style={{ marginTop: 24, fontSize: 12, color: "var(--muted)" }}>
-        Tip: Add your NewsAPI key in <code>.env.local</code> as <code>NEWSAPI_KEY=…</code> for live headlines.
+        Tip: Set <code>NEWSAPI_KEY</code> and <code>TWITTER_BEARER</code> in Vercel → Project Settings → Environment Variables.
       </footer>
     </main>
   );
