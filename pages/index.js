@@ -174,19 +174,6 @@ export default function Home() {
     }
   };
 
-  // Fetch X posts
-  const fetchX = async () => {
-    setXLoading(true);
-    try {
-      const res = await fetch("/api/x-posts");
-      const data = await res.json();
-      setXPosts(Array.isArray(data.posts) ? data.posts : []);
-    } catch {
-      setXPosts([]);
-    } finally {
-      setXLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchNews();
